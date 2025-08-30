@@ -86,4 +86,41 @@ class RoleService
             ],
         ];
     }
+
+    /**
+     * Get all roles with their permissions for the index page.
+     */
+    public function getRolesForIndex(): array
+    {
+        $availableRoles = TenantRole::with('permissions')
+            ->get()
+            ->map(function ($role) {
+                return [
+                    'name' => $role->name,
+                    'display_name' => $role->display_name ?? ucfirst($role->name),
+                    'description' => $role->description ?? $this->getRoleDescription($role->name),
+                    'permissions' => $role->permissions->pluck('name')->toArray(),
+                    'permission_count' => $role->permissions->count(),
+                ];
+            });
+
+        return $availableRoles->toArray();
+    }
+
+    /**
+     * Get all available permissions for the index page.
+     */
+    public function getPermissionsForIndex(): array
+    {
+        $availablePermissions = TenantPermission::all()
+            ->map(function ($permission) {
+                return [
+                    'name' => $permission->name,
+                    'display_name' => $this->getPermissionDisplayName($permission->name),
+                    'description' => $this->getPermissionDescription($permission->name),
+                ];
+            });
+
+        return $availablePermissions->toArray();
+    }
 }
