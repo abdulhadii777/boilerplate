@@ -1,0 +1,156 @@
+---
+alwaysApply: true
+---
+# Cursor Rules — Laravel 12 + Inertia (React 18) + Vite + Tailwind + shadcn/ui (Single Repo)
+
+Be concise, typed, accessible, production-ready. Prefer code over prose.
+
+## 0) Monolith Guardrails
+
+* Single repo: Laravel backend + Inertia React in `resources/js`.
+* Use **Starter Kit** (Breeze/Jetstream) conventions; keep root Inertia entry at `resources/views/app.blade.php`.
+* Security: CSRF enabled, authorize via Policies, validate via FormRequest.
+* Code style: Laravel Pint (PSR-12), TS strict, ESLint+Prettier, no `any`.
+
+## 1) Folder Conventions (Monolith)
+
+**Laravel**
+
+* `app/Http/Controllers/*Controller.php` (thin)
+* `app/Http/Requests/*Request.php` (rules + authorize)
+* `app/Policies/*Policy.php` (per model)
+* `app/Services/*Service.php` (business logic)
+* `routes/web.php` (Inertia routes)
+* `resources/views/app.blade.php` (single Inertia mount)
+
+**React (inside Laravel)**
+
+```
+resources/js/
+  app.tsx                  # Inertia bootstrap
+  shims.d.ts
+  shared/
+    components/ui/*        # shadcn/ui
+    utils/*
+  features/<feature>/
+    pages/                 # route targets (Inertia)
+    containers/            # data + orchestration
+    components/            # pure presentational
+    hooks/
+    services/              # client helpers (fetch is via Inertia forms)
+    types/
+```
+
+## 2) Inertia Rules
+
+* Use `@inertiajs/react` (`useForm`, `usePage`, `Link`, `router`).
+* Compute heavy/derived data on server; pass minimal props.
+* Use named routes (Ziggy optional) instead of hardcoding URLs.
+* Use **lazy props** (`fn()=>...`) for heavy data in controllers.
+
+## 3) shadcn/ui Rules (Monolith Vite)
+
+* Install once; keep components under `resources/js/shared/components/ui`.
+* Use variants (no ad-hoc CSS), keep ARIA + keyboard behavior.
+* Dark mode via `class="dark"`; tokens via CSS variables.
+* Do not fetch/mutate in presentational components.
+
+## 4) Cursor Boost Prompts (use liberally)
+
+* **/boost**: “Type-safe + accessible + shadcn patterns”
+* **/boost**: “Thin controllers, extract services, add FormRequest + Policy”
+* **/boost**: “A11y audit (labels, aria, keyboard, focus)”
+* **/boost**: “Replace custom UI with shadcn primitives where possible”
+
+## 5) Optional MCPs (if available)
+
+* **laravel.docs.mcp**: `search(query)`, `snippet(topic)`
+* **shadcn.catalog.mcp**: `list()`, `example(name)` (Form, Dialog, Table, Toast)
+* **a11y.audit.mcp**: `audit(tsx)` → WCAG hints
+
+> If MCPs are not configured, proceed; do not block.
+
+## 6) General Feature Workflow (Server→Client)
+
+1. **Add route** in `routes/web.php` with auth guards.
+2. **Create FormRequest** for validation/authorization.
+3. **Implement Policy** per model and register in `AuthServiceProvider`.
+4. **Write Controller methods** (thin: delegate to Service).
+5. **Add Service methods** for business logic.
+6. **Create Inertia page** in `features/<feature>/pages`.
+7. **Build Container** to handle form/data interactions with Inertia hooks.
+8. **Use Components** (shadcn/ui + custom presentational) for UI.
+9. **Define Types** under `features/<feature>/types`.
+
+## 7) Checklists
+
+### A) Feature PR Checklist
+
+* [ ] Route named + guarded (`auth`, `verified` if needed).
+* [ ] FormRequest with `authorize()` + `rules()`.
+* [ ] Policy methods exist + mapped in `AuthServiceProvider`.
+* [ ] Controller ≤40 LOC/action; no business logic.
+* [ ] Service unit tests for create/update/delete.
+* [ ] Inertia page → container → pure components.
+* [ ] shadcn components used; no ad-hoc HTML forms.
+* [ ] A11y: labels/aria/keyboard/focus.
+* [ ] TS strict; no `any`; types in `features/<feature>/types`.
+* [ ] Pint + ESLint + Prettier pass; tests green.
+
+### B) Inertia Form Checklist
+
+* [ ] `useForm<T>()` typed.
+* [ ] Prevent default; `post/put/delete` with callbacks.
+* [ ] Surface `errors.<field>` via `<FormMessage />` or inline.
+* [ ] Use flash → toast/snackbar.
+* [ ] Preserve scroll/state when useful.
+
+### C) shadcn/ui Usage Checklist
+
+* [ ] Inputs have `id`, `<Label htmlFor>`, `aria-invalid` on error.
+* [ ] Button variants + sizes; no inline style.
+* [ ] Dialog/Sheet/Dropdown close on Esc + overlay.
+* [ ] Tables wrapped in `overflow-x-auto` for small screens.
+* [ ] Respect dark mode tokens.
+
+## 8) Post-Generation Auto-Review (AI must self-check & fix)
+
+* Correct route names + Policies wired.
+* FormRequest `authorize()` present and not returning true blindly.
+* No implicit `any`; exported types exist.
+* A11y complete: labels, aria, keyboard, focus ring.
+* shadcn primitives used; variants over custom CSS.
+* No data fetching in presentational components.
+* Performance: pagination/eager loading; lazy props.
+* Security: guarded mass-assignment; policy checks in controller.
+* Error UX: inline field errors + toast.
+
+## 9) Setup Snippets (Monolith)
+
+* **Install shadcn/ui** (inside Laravel Vite project root):
+
+  ```
+  npx shadcn@latest init
+  npx shadcn@latest add button input label table form dialog dropdown-menu toast tabs
+  ```
+
+  Ensure components path: `resources/js/shared/components/ui`
+* **Tailwind content** in `tailwind.config.js`:
+
+  ```js
+  content: [
+    './resources/views/**/*.blade.php',
+    './resources/js/**/*.{ts,tsx}',
+  ],
+  ```
+* **Aliases** in `vite.config.ts`:
+
+  ```ts
+  resolve: { alias: { '@': '/resources/js' } }
+  ```
+* **TS config**: `"strict": true`, path alias `"@/*": ["resources/js/*"]`.
+
+## 10) House Rules
+
+**Do**: vertical PRs (route→request→policy→service→page), composition > inheritance, meaningful commit messages.
+**Don’t**: fetch/mutate in presentational components, bypass policies, ship `any`.
