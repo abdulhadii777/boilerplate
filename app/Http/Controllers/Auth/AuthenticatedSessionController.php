@@ -33,7 +33,16 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Get the user's first available tenant
+        $user = $request->user();
+        $tenantUser = $user->tenantUsers()->first();
+
+        if (! $tenantUser) {
+            // User has no tenants, redirect to home or show error
+            return redirect()->intended(route('home'));
+        }
+
+        return redirect()->intended(route('tenant.dashboard', ['tenant' => $tenantUser->tenant_id], absolute: false));
     }
 
     /**

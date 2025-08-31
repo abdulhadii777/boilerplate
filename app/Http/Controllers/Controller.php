@@ -2,12 +2,45 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\PermissionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 abstract class Controller
 {
+    protected PermissionService $permissionService;
+
+    public function __construct()
+    {
+        $this->permissionService = app(PermissionService::class);
+    }
+
+    /**
+     * Check if the current user has a specific permission.
+     */
+    protected function userCan(string $permission): bool
+    {
+        $user = request()->user();
+        $tenantId = tenant('id');
+
+        if (!$user || !$tenantId) {
+            return false;
+        }
+
+        return $this->permissionService->userHasPermission($user->id, $tenantId, $permission);
+    }
+
+    /**
+     * Authorize the current user has a specific permission or abort.
+     */
+    protected function authorize(string $permission): void
+    {
+        if (!$this->userCan($permission)) {
+            abort(403, 'You do not have permission to access this resource.');
+        }
+    }
+
     /**
      * Get common props for tenant pages.
      */
@@ -16,6 +49,12 @@ abstract class Controller
         $user = $request->user();
         $tenant = tenant();
         $tenantId = tenant('id');
+
+        // Get user permissions for frontend
+        $permissions = [];
+        if ($user && $tenantId) {
+            $permissions = $this->permissionService->getUserPermissionsForFrontend($user->id, $tenantId);
+        }
 
         return [
             'tenant' => [
@@ -27,15 +66,7 @@ abstract class Controller
                 'email' => $user->email,
                 'role' => $user->getTenantRole($tenantId),
             ],
-            'permissions' => [
-                'can_grant' => in_array($user->getTenantRole($tenantId), ['owner', 'admin']),
-                'can_revoke' => in_array($user->getTenantRole($tenantId), ['owner', 'admin']),
-                'can_manage_owner' => $user->getTenantRole($tenantId) === 'owner',
-                'can_manage_users' => in_array($user->getTenantRole($tenantId), ['owner', 'admin']),
-                'can_manage_roles' => $user->getTenantRole($tenantId) === 'owner',
-                'can_view_analytics' => true,
-                'can_manage_settings' => in_array($user->getTenantRole($tenantId), ['owner', 'admin']),
-            ],
+            'permissions' => $permissions,
         ];
     }
 
@@ -45,7 +76,7 @@ abstract class Controller
     protected function renderTenantPage(string $component, array $props = []): Response
     {
         $commonProps = $this->getTenantProps(request());
-        
+
         return Inertia::render($component, array_merge($commonProps, $props));
     }
 }

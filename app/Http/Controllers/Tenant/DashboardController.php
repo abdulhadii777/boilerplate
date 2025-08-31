@@ -10,11 +10,18 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
     /**
      * Display the tenant dashboard.
      */
     public function index(Request $request): Response
     {
+        $this->authorize('can_view_dashboard');
+
         $tenantId = tenant('id');
 
         return $this->renderTenantPage('dashboard/tenant', [

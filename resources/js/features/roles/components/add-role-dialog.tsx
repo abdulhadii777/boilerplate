@@ -57,7 +57,6 @@ export default function AddRoleDialog({ permissions, onRoleCreated, onError }: A
                 onRoleCreated(result.role);
             }
         } catch (error) {
-            console.error('Error creating role:', error);
             if (onError) {
                 onError(error instanceof Error ? error.message : 'Failed to create role. Please try again.');
             }

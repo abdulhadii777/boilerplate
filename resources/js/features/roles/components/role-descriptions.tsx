@@ -7,15 +7,13 @@ interface RoleDescriptionsProps {
 }
 
 export default function RoleDescriptions({ roles }: RoleDescriptionsProps) {
-    const handleEditRole = (role: Role) => {
+    const handleEditRole = () => {
         // TODO: Open edit role dialog
-        console.log('Edit role:', role.name);
     };
 
-    const handleDeleteRole = (role: Role) => {
-        if (confirm(`Are you sure you want to delete the ${role.display_name} role?`)) {
+    const handleDeleteRole = () => {
+        if (confirm(`Are you sure you want to delete this role?`)) {
             // TODO: Delete role
-            console.log('Delete role:', role.name);
         }
     };
 

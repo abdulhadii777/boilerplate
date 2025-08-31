@@ -5,50 +5,48 @@ import { Header } from '@/shared/components/ui/header';
 import { Navigation } from '@/shared/components/ui/navigation';
 import { UserProfile } from '@/shared/components/ui/user-profile';
 import { cn } from '@/shared/utils';
+import { usePermissions } from '@/shared/hooks/usePermissions';
+import type { TenantPermissions } from '@/shared/utils/permissions';
 
 interface TenantLayoutProps extends PropsWithChildren {
     className?: string;
-    tenant: {
-        id: string;
-        name: string;
-    };
-    user: {
-        name: string;
-        email: string;
-        role: string;
-    };
-    permissions: {
-        can_manage_users: boolean;
-        can_manage_roles: boolean;
-        can_view_analytics: boolean;
-        can_manage_settings: boolean;
-    };
 }
 
-export default function TenantLayout({ children, className, tenant, user, permissions }: TenantLayoutProps) {
+export default function TenantLayout({ children, className }: TenantLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    
+    // Get data from Inertia shared props (no API calls needed!)
+    const { can, currentUser, tenant } = usePermissions();
+
+    // Get tenant ID from URL for navigation
+    const getTenantId = () => {
+        const pathParts = window.location.pathname.split('/');
+        const tenantIndex = pathParts.findIndex(part => part === 't');
+        return pathParts[tenantIndex + 1] || tenant.id;
+    };
+
+    const tenantId = getTenantId();
 
     const navigation = [
         {
             name: 'Dashboard',
-            href: `/t/${tenant?.id}/dashboard`,
+            href: `/t/${tenantId}/dashboard`,
             icon: Home,
-            current: window.location.pathname.endsWith('/dashboard'),
+            current: typeof window !== 'undefined' && window.location.pathname.endsWith('/dashboard'),
         },
         {
             name: 'Role Management',
-            href: `/t/${tenant?.id}/roles`,
+            href: `/t/${tenantId}/roles`,
             icon: Shield,
-            current: window.location.pathname.includes('/roles'),
-            permission: 'can_manage_roles' as keyof typeof permissions,
+            current: typeof window !== 'undefined' && window.location.pathname.includes('/roles'),
+            permission: 'can_manage_roles',
         },
         {
             name: 'User Management',
-            href: '#',
+            href: `/t/${tenantId}/users`,
             icon: Users,
-            current: false,
-            disabled: true,
-            permission: 'can_manage_users' as keyof typeof permissions,
+            current: typeof window !== 'undefined' && window.location.pathname.includes('/users'),
+            permission: 'can_manage_users',
         },
         {
             name: 'Settings',
@@ -56,13 +54,18 @@ export default function TenantLayout({ children, className, tenant, user, permis
             icon: Settings,
             current: false,
             disabled: true,
-            permission: 'can_manage_settings' as keyof typeof permissions,
+            permission: 'can_manage_settings',
         },
     ];
 
     const filteredNavigation = navigation.filter((item) => {
         if (!item.permission) return true;
-        return permissions?.[item.permission];
+        // Add safety check in case permissions aren't loaded yet
+        try {
+            return can(item.permission as keyof TenantPermissions);
+        } catch {
+            return false;
+        }
     });
 
     // Get current page title from navigation
@@ -86,7 +89,7 @@ export default function TenantLayout({ children, className, tenant, user, permis
                                 <Building2 className="h-5 w-5 text-primary-foreground" />
                             </div>
                             <div>
-                                <div className="text-sm font-semibold text-sidebar-foreground">{tenant?.name || 'Organization'}</div>
+                                <div className="text-sm font-semibold text-sidebar-foreground">{tenant.name}</div>
                                 <div className="text-xs text-sidebar-foreground/70">Tenant Portal</div>
                             </div>
                         </div>
@@ -98,7 +101,7 @@ export default function TenantLayout({ children, className, tenant, user, permis
                     </div>
 
                     {/* User Profile */}
-                    <UserProfile user={user} />
+                    <UserProfile user={currentUser} />
                 </div>
             </div>
 
@@ -114,7 +117,7 @@ export default function TenantLayout({ children, className, tenant, user, permis
             <div className="flex flex-1 flex-col lg:ml-0">
                 <Header 
                     pageTitle={getCurrentPageTitle()}
-                    user={user}
+                    user={{ name: currentUser.name, email: currentUser.email }}
                     onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
                     showMenuButton={true}
                 />

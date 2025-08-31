@@ -4,20 +4,17 @@ import RoleDescriptions from '@/features/roles/components/role-descriptions';
 import AddRoleDialog from '@/features/roles/components/add-role-dialog';
 import { ToastContainer } from '@/shared/components/ui/toast';
 import { useToast } from '@/shared/hooks';
-import { useRoleManagement } from '../hooks/use-role-management';
-import { RoleManagementPageProps } from '../types';
+import { useRoleManagement } from '@/features/roles/hooks/use-role-management';
+import { RoleManagementPageProps } from '@/features/roles/types';
 
 export default function RoleManagementPage({ 
-    tenant, 
-    user, 
     availableRoles, 
     availablePermissions, 
     permissions
-}: RoleManagementPageProps) {
+}: Omit<RoleManagementPageProps, 'tenant' | 'user'>) {
     // Ensure we have valid data
     const validAvailableRoles = availableRoles || [];
     const validAvailablePermissions = availablePermissions || [];
-    const validPermissions = permissions || {};
 
     // Custom hooks
     const { toasts, addToast, removeToast } = useToast();
@@ -26,7 +23,7 @@ export default function RoleManagementPage({
     return (
         <>
             <Head title="Role Management" />
-            <TenantLayout tenant={tenant} user={user} permissions={permissions}>
+            <TenantLayout>
                 <div className="flex-1 space-y-6 p-6">
                     {/* Header with Add Role Button */}
                     <div className="flex items-center justify-between">
@@ -36,7 +33,7 @@ export default function RoleManagementPage({
                                 Manage roles and their permissions in your organization.
                             </p>
                         </div>
-                        {validPermissions.can_manage_roles && (
+                        {permissions.can_manage_roles && (
                             <AddRoleDialog 
                                 permissions={validAvailablePermissions}
                                 onRoleCreated={(role) => handleRoleCreated(role, addToast)}

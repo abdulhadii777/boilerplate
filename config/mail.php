@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'default' => env('MAIL_MAILER', 'log'),
+    'default' => env('MAIL_MAILER', 'hostinger'),
 
     /*
     |--------------------------------------------------------------------------
@@ -47,6 +47,9 @@ return [
             'password' => env('MAIL_PASSWORD'),
             'timeout' => null,
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url(env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+            'encryption' => env('MAIL_ENCRYPTION', 'ssl'),
+            'verify_peer' => false,
+            'verify_peer_name' => false,
         ],
 
         'ses' => [
@@ -72,11 +75,32 @@ return [
 
         'log' => [
             'transport' => 'log',
-            'channel' => env('MAIL_LOG_CHANNEL'),
+            'channel' => env('MAIL_LOG_CHANNEL', 'mail'),
         ],
 
         'array' => [
             'transport' => 'array',
+        ],
+
+        'database' => [
+            'transport' => 'database',
+        ],
+
+        'debug' => [
+            'transport' => 'log',
+            'channel' => 'mail',
+        ],
+
+        'hostinger' => [
+            'transport' => 'smtp',
+            'host' => 'smtp.hostinger.com',
+            'port' => 465,
+            'username' => 'info@soft.naqeer.com',
+            'password' => 'z93\'tBh1',
+            'encryption' => 'ssl',
+            'timeout' => 30,
+            'verify_peer' => false,
+            'verify_peer_name' => false,
         ],
 
         'failover' => [
