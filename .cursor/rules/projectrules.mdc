@@ -1,0 +1,140 @@
+---
+alwaysApply: true
+---
+
+# Global Rules
+
+## Frontend Structure
+- **Never put an entire feature in a single file.**  
+  - Each page must only act as a **container** (like React "Container" pattern).  
+  - Pages are responsible only for:
+    - Handling prompts
+    - Composing child components
+    - Managing Inertia props  
+  - Components must be created for each UI item (e.g. `role-table`, `user-dialog`, `user-form`).  
+- Each component must be **dumb** (minimal logic, focused only on UI).  
+- **Do not deliver only a page file.** At minimum:
+  - 1 page container
+  - Multiple components (table, dialog, form, etc.)
+  - Hooks, utils, and **types (in separate files)**
+- Code must always be split into:
+  - `pages/`
+  - `components/`
+  - `hooks/`
+  - `utils/`
+  - `types/`
+
+---
+
+## Naming Conventions
+- **Frontend**:  
+  - All files and folders must use **kebab-case**.  
+    - ✅ Example: `role-table.tsx`, `user-form.tsx`, `user-dialog.tsx`  
+    - ❌ Not allowed: `RoleTable.tsx`, `UserForm.tsx`  
+- **Backend**:  
+  - Must use **snake_case** (e.g. `role_service.php`, `user_policy.php`).  
+- Use `change-case` npm package if needed for transformations.
+
+---
+
+## Shadcn / MCP Usage
+- **Always use shadcn mcp** to create components, blocks, or UI structures.  
+- Do not manually re-implement features (e.g. tables, dialogs, forms) if a **shadcn block** or component exists.  
+- If a required block does not exist → generate it using **shadcn mcp**.  
+- No CSS customizations unless explicitly requested — use default shadcn styles.
+
+---
+
+# Cursor Rules – Inertia Enforcement
+
+## Inertia Usage
+- **All controllers and frontend form handling must follow `Docs/inertia.md`.**
+
+### CRUD Operations
+- Always use the **Inertia pattern**:
+  - `useForm` for local form state and submissions.
+  - Inertia router methods:
+    - `router.post(...)`
+    - `router.put(...)`
+    - `router.patch(...)`
+    - `router.delete(...)`
+  - ❌ Do **NOT** use `fetch`, `axios`, or any manual AJAX calls.
+  - ❌ Do **NOT** use React Router for navigation.  
+  - ✅ All redirects, flash messages, and validation **must rely on Inertia mechanisms**.
+
+### Components & Pages
+- Pages and components **must consume Inertia props** passed from backend.
+- No manual prop injection or parallel API fetching.
+- State should sync with server via Inertia only.
+
+---
+
+⚠️ **Rule of thumb**: If you find yourself writing `fetch(...)` or importing `axios`, stop. Replace it with `useForm` + `router.<method>` from Inertia.
+
+
+## Backend Structure
+- Code must always be split into:
+  - `routes/`
+  - `requests/`
+  - `policies/`
+  - `controllers/`
+  - `services/`
+  - `resources/`
+  - `collections/`
+- **Routes**
+  - Do **not** add feature routes directly in `web.php`.  
+  - Each feature must have its own dedicated route file (e.g. `routes/users.php`, `routes/roles.php`).  
+  - Do **not** add permission checks in route middleware — permissions should be enforced via **controllers + policies/gates**.
+- **Services**
+  - Services are **mandatory**.  
+  - Controllers should only handle request validation + delegation.  
+  - All business logic must live in the service layer.  
+- **Requests**
+  - Requests are for **validation only**.  
+  - Do not duplicate **authorization logic** in Requests if already enforced via controllers/policies.  
+- **snake_case** for backend naming.  
+- Update **PermissionsSeeder** whenever new permissions are added.
+
+---
+
+## Forms & Validation
+- Use **Inertia’s `useForm`** for all forms. (NOT React Hook Form).  
+- Use **Laravel Form Requests** for server-side validation.  
+- **Authorization belongs in controllers/policies, not in requests.**
+
+---
+
+## Authentication & Authorization
+- Use **Laravel Sanctum** for cookie/session authentication (NOT API tokens).  
+- Use **Spatie Laravel Permission** for role/permission management.  
+
+---
+
+## Routes
+- Routes must be split by feature:
+  - `routes/web.php` → only global routes (dashboard, welcome, etc.)
+  - `routes/auth.php`
+  - `routes/users.php`
+  - `routes/roles.php`
+  - etc.
+
+---
+
+## Feature Implementation Planning
+- For every new feature:
+  - Generate a clear **implementation plan** before writing code.  
+  - The plan must include:
+    - **Frontend**: list of pages, components, hooks, utils, **types**.  
+    - **Backend**: list of routes, requests, controllers, services, policies, resources, collections, migrations, seeders.  
+    - **Summary** of responsibilities for each file.  
+    - CRUD functions with signatures (if applicable).  
+  - Always ensure alignment with `Docs/inertia.md` and these global rules.  
+- **Do not write implementation code until the plan is confirmed.**
+
+---
+
+## General
+- Always focus on **UX and user journey**.  
+- Avoid duplicate or redundant code.  
+- Keep implementation simple, follow best practices, and do not over-engineer.  
+- TopBar + Sidebar must always be present.  
